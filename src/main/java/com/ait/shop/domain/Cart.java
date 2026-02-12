@@ -14,7 +14,7 @@ public class Cart {
     @Column(name = "id")
     private Long id;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "cart")
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "cart", orphanRemoval = true)
     private Set<Position> positions;
 
     @OneToOne

@@ -147,7 +147,8 @@ public class CustomerServiceImpl implements CustomerService {
             Position position = getPosition(cart, product);
 
             if (position != null) {
-                position.setQuantity(0);
+                cart.getPositions().remove(position);
+                position.setCart(null);
             }
         }
     }
@@ -160,7 +161,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (customer != null) {
             Cart cart = customer.getCart();
 
-            cart.getPositions().forEach(x -> x.setQuantity(0));
+            cart.getPositions().clear();
         }
     }
 
