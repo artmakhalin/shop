@@ -27,6 +27,12 @@ public class Position {
     public Position() {
     }
 
+    public Position(Product product, int quantity, Cart cart) {
+        this.product = product;
+        this.quantity = quantity;
+        this.cart = cart;
+    }
+
     public Long getId() {
         return id;
     }
