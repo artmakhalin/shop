@@ -92,6 +92,7 @@ public class ProductServiceImpl implements ProductService {
             return BigDecimal.ZERO;
         }
 
+
         return getAllActiveProductsTotalCost().divide(
                 BigDecimal.valueOf(productsCount),
                 2,
