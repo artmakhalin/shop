@@ -117,7 +117,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void addPositionToCustomerCart(Long customerId, Long productId) {
-        Product product = productService.getActiveProductById(productId);
+        Product product = productService.getActiveEntityById(productId);
         Customer customer = getCustomerById(customerId);
 
         if (customer != null && product != null) {
@@ -139,7 +139,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void deletePositionFromCustomerCart(Long customerId, Long productId) {
-        Product product = productService.getActiveProductById(productId);
+        Product product = productService.getActiveEntityById(productId);
         Customer customer = getCustomerById(customerId);
 
         if (customer != null && product != null) {

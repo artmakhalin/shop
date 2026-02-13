@@ -1,6 +1,8 @@
 package com.ait.shop.controller;
 
-import com.ait.shop.domain.Product;
+import com.ait.shop.dto.product.ProductDto;
+import com.ait.shop.dto.product.ProductSaveDto;
+import com.ait.shop.dto.product.ProductUpdateDto;
 import com.ait.shop.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -28,14 +30,14 @@ public class ProductController {
     // POST -> http://10.20.30.40:8080/products -> ожидаем данные продукта в теле запроса
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Product save(@RequestBody Product product) {
-        return service.save(product);
+    public ProductDto save(@RequestBody ProductSaveDto saveDto) {
+        return service.save(saveDto);
     }
 
     //    Вернуть все продукты из базы данных (активные).
     // GET -> http://10.20.30.40:8080/products
     @GetMapping
-    public List<Product> getAll() {
+    public List<ProductDto> getAll() {
         return service.getAllActiveProducts();
     }
 
@@ -43,15 +45,15 @@ public class ProductController {
     //    Вернуть один продукт из базы данных по его идентификатору (если он активен).
     // GET -> http://10.20.30.40:8080/products/5
     @GetMapping("/{id}")
-    public Product getById(@PathVariable Long id) {
+    public ProductDto getById(@PathVariable Long id) {
         return service.getActiveProductById(id);
     }
 
     //    Изменить один продукт в базе данных по его идентификатору.
 // PUT -> http://10.20.30.40:8080/products/5
     @PutMapping("/{id}")
-    public void update(@PathVariable Long id, @RequestBody Product product) {
-        service.update(id, product);
+    public void update(@PathVariable Long id, @RequestBody ProductUpdateDto updateDto) {
+        service.update(id, updateDto);
     }
 
     //    Удалить продукт из базы данных по его идентификатору.

@@ -1,6 +1,10 @@
 package com.ait.shop.service;
 
 import com.ait.shop.domain.Product;
+import com.ait.shop.dto.mapping.ProductMapper;
+import com.ait.shop.dto.product.ProductDto;
+import com.ait.shop.dto.product.ProductSaveDto;
+import com.ait.shop.dto.product.ProductUpdateDto;
 import com.ait.shop.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -28,32 +32,47 @@ import java.util.List;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository repository;
+    private final ProductMapper mapper;
 
-    public ProductServiceImpl(ProductRepository repository) {
+    public ProductServiceImpl(ProductRepository repository, ProductMapper mapper) {
         this.repository = repository;
+        this.mapper = mapper;
     }
 
     @Override
-    public Product save(Product product) {
-        product.setActive(true);
-        return repository.save(product);
+    public ProductDto save(ProductSaveDto saveDto) {
+        Product entity = mapper.mapDtoToEntity(saveDto);
+        entity.setActive(true);
+        repository.save(entity);
+
+        return mapper.mapEntityToDto(entity);
     }
 
     @Override
-    public List<Product> getAllActiveProducts() {
-        return repository.findAllByActiveTrue();
+    public List<ProductDto> getAllActiveProducts() {
+        return repository.findAllByActiveTrue()
+                .stream()
+                .map(mapper::mapEntityToDto)
+                .toList();
     }
 
     @Override
-    public Product getActiveProductById(Long id) {
+    public ProductDto getActiveProductById(Long id) {
+        Product product = getActiveEntityById(id);
+
+        return mapper.mapEntityToDto(product);
+    }
+
+    @Override
+    public Product getActiveEntityById(Long id) {
         return repository.findByIdAndActiveTrue(id).orElse(null);
     }
 
     @Override
     @Transactional
-    public void update(Long id, Product product) {
+    public void update(Long id, ProductUpdateDto updateDto) {
         repository.findById(id)
-                .ifPresent(x -> x.setPrice(product.getPrice()));
+                .ifPresent(x -> x.setPrice(updateDto.getNewPrice()));
     }
 
     @Override
@@ -77,7 +96,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public BigDecimal getAllActiveProductsTotalCost() {
-        return getAllActiveProducts()
+        return repository.findAllByActiveTrue()
                 .stream()
                 .map(Product::getPrice)
                 .reduce(BigDecimal::add)
@@ -91,7 +110,6 @@ public class ProductServiceImpl implements ProductService {
         if (productsCount == 0) {
             return BigDecimal.ZERO;
         }
-
 
         return getAllActiveProductsTotalCost().divide(
                 BigDecimal.valueOf(productsCount),
