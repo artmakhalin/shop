@@ -1,7 +1,8 @@
 package com.ait.shop.controller;
 
-import com.ait.shop.domain.Customer;
-import com.ait.shop.domain.Position;
+import com.ait.shop.dto.customer.CustomerDto;
+import com.ait.shop.dto.customer.CustomerSaveUpdateDto;
+import com.ait.shop.dto.position.PositionSaveDto;
 import com.ait.shop.service.CustomerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,27 +23,27 @@ public class CustomerController {
     //    Сохранить покупателя в базе данных.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Customer save(@RequestBody Customer customer) {
-        return service.save(customer);
+    public CustomerDto save(@RequestBody CustomerSaveUpdateDto saveDto) {
+        return service.save(saveDto);
     }
 
 
     //    Вернуть всех покупателей из базы данных.
     @GetMapping
-    public List<Customer> getAll() {
+    public List<CustomerDto> getAll() {
         return service.getAllCustomers();
     }
 
     //    Вернуть одного покупателя из базы данных по его идентификатору.
     @GetMapping("/{id}")
-    public Customer getById(@PathVariable Long id) {
+    public CustomerDto getById(@PathVariable Long id) {
         return service.getCustomerById(id);
     }
 
     //    Изменить одного покупателя в базе данных по его идентификатору.
     @PutMapping("/{id}")
-    public void update(@PathVariable Long id, @RequestBody Customer customer) {
-        service.update(id, customer);
+    public void update(@PathVariable Long id, @RequestBody CustomerSaveUpdateDto updateDto) {
+        service.update(id, updateDto);
     }
 
     //    Удалить покупателя из базы данных по его идентификатору.
@@ -78,8 +79,8 @@ public class CustomerController {
 
     //    Добавить товар в корзину покупателя по их идентификаторам.
     @PostMapping("/{customerId}/cart/items/{productId}")
-    public void addPositionToCustomerCart(@PathVariable Long customerId, @PathVariable Long productId) {
-        service.addPositionToCustomerCart(customerId, productId);
+    public void addPositionToCustomerCart(@PathVariable Long customerId, @PathVariable Long productId, @RequestBody PositionSaveDto saveDto) {
+        service.addPositionToCustomerCart(customerId, productId, saveDto);
     }
 
     //    Удалить товар из корзины покупателя по их идентификаторам.

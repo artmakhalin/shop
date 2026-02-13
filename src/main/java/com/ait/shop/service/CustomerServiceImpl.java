@@ -4,6 +4,10 @@ import com.ait.shop.domain.Cart;
 import com.ait.shop.domain.Customer;
 import com.ait.shop.domain.Position;
 import com.ait.shop.domain.Product;
+import com.ait.shop.dto.customer.CustomerDto;
+import com.ait.shop.dto.customer.CustomerSaveUpdateDto;
+import com.ait.shop.dto.mapping.CustomerMapper;
+import com.ait.shop.dto.position.PositionSaveDto;
 import com.ait.shop.repository.CustomerRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
@@ -17,38 +21,53 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository repository;
     private final ProductService productService;
+    private final CustomerMapper mapper;
 
-    public CustomerServiceImpl(CustomerRepository repository, ProductService productService) {
+    public CustomerServiceImpl(CustomerRepository repository, ProductService productService, CustomerMapper mapper) {
         this.repository = repository;
         this.productService = productService;
+        this.mapper = mapper;
     }
 
     @Override
-    public Customer save(Customer customer) {
-        customer.setActive(true);
+    public CustomerDto save(CustomerSaveUpdateDto saveDto) {
+        Customer entity = new Customer();
+        entity.setName(saveDto.getName());
+        entity.setActive(true);
         Cart cart = new Cart();
-        customer.setCart(cart);
-        cart.setCustomer(customer);
+        entity.setCart(cart);
+        cart.setCustomer(entity);
+        repository.save(entity);
 
-        return repository.save(customer);
+        return mapper.mapEntityToDto(entity);
     }
 
     @Override
-    public List<Customer> getAllCustomers() {
-        return repository.findAllByActiveTrue();
+    public List<CustomerDto> getAllCustomers() {
+        return repository.findAllByActiveTrue()
+                .stream()
+                .map(mapper::mapEntityToDto)
+                .toList();
     }
 
     @Override
-    public Customer getCustomerById(Long id) {
+    public CustomerDto getCustomerById(Long id) {
+        Customer entity = getEntityById(id);
+
+        return mapper.mapEntityToDto(entity);
+    }
+
+    @Override
+    public Customer getEntityById(Long id) {
         return repository.findByIdAndActiveTrue(id)
                 .orElse(null);
     }
 
     @Override
     @Transactional
-    public void update(Long id, Customer customer) {
+    public void update(Long id, CustomerSaveUpdateDto updateDto) {
         repository.findById(id)
-                .ifPresent(x -> x.setName(customer.getName()));
+                .ifPresent(x -> x.setName(updateDto.getName()));
     }
 
     @Override
@@ -72,7 +91,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public BigDecimal getCustomerCartTotalCost(Long id) {
-        Customer customer = getCustomerById(id);
+        Customer customer = getEntityById(id);
         if (customer == null) {
             return BigDecimal.ZERO;
         }
@@ -90,7 +109,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public BigDecimal getCustomerCartAveragePrice(Long id) {
-        Customer customer = getCustomerById(id);
+        Customer customer = getEntityById(id);
 
         if (customer == null) {
             return BigDecimal.ZERO;
@@ -116,21 +135,21 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    public void addPositionToCustomerCart(Long customerId, Long productId) {
+    public void addPositionToCustomerCart(Long customerId, Long productId, PositionSaveDto saveDto) {
         Product product = productService.getActiveEntityById(productId);
-        Customer customer = getCustomerById(customerId);
+        Customer customer = getEntityById(customerId);
 
         if (customer != null && product != null) {
             Cart cart = customer.getCart();
             Position position = getPosition(cart, product);
 
             if (position == null) {
-                position = new Position(product, 1, cart);
+                position = new Position(product, saveDto.getQuantity(), cart);
                 position.setCart(cart);
                 cart.getPositions().add(position);
 
             } else {
-                position.setQuantity(position.getQuantity() + 1);
+                position.setQuantity(position.getQuantity() + saveDto.getQuantity());
             }
         }
     }
@@ -140,7 +159,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public void deletePositionFromCustomerCart(Long customerId, Long productId) {
         Product product = productService.getActiveEntityById(productId);
-        Customer customer = getCustomerById(customerId);
+        Customer customer = getEntityById(customerId);
 
         if (customer != null && product != null) {
             Cart cart = customer.getCart();
@@ -156,7 +175,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void clearCustomerCart(Long customerId) {
-        Customer customer = getCustomerById(customerId);
+        Customer customer = getEntityById(customerId);
 
         if (customer != null) {
             Cart cart = customer.getCart();

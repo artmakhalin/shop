@@ -1,7 +1,9 @@
 package com.ait.shop.service;
 
 import com.ait.shop.domain.Customer;
-import com.ait.shop.domain.Position;
+import com.ait.shop.dto.customer.CustomerDto;
+import com.ait.shop.dto.customer.CustomerSaveUpdateDto;
+import com.ait.shop.dto.position.PositionSaveDto;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,16 +11,17 @@ import java.util.List;
 public interface CustomerService {
 
 //    Сохранить покупателя в базе данных.
-    Customer save(Customer customer);
+    CustomerDto save(CustomerSaveUpdateDto saveDto);
 
 //    Вернуть всех покупателей из базы данных.
-    List<Customer> getAllCustomers();
+    List<CustomerDto> getAllCustomers();
 
 //    Вернуть одного покупателя из базы данных по его идентификатору.
-    Customer getCustomerById(Long id);
+    CustomerDto getCustomerById(Long id);
+    Customer getEntityById(Long id);
 
 //    Изменить одного покупателя в базе данных по его идентификатору.
-    void update(Long id, Customer customer);
+    void update(Long id, CustomerSaveUpdateDto updateDto);
 
 //    Удалить покупателя из базы данных по его идентификатору.
     void deleteById(Long id);
@@ -36,7 +39,7 @@ public interface CustomerService {
     BigDecimal getCustomerCartAveragePrice(Long id);
 
 //    Добавить товар в корзину покупателя по их идентификаторам.
-    void addPositionToCustomerCart(Long customerId, Long productId);
+    void addPositionToCustomerCart(Long customerId, Long productId, PositionSaveDto saveDto);
 
 //    Удалить товар из корзины покупателя по их идентификаторам.
     void deletePositionFromCustomerCart(Long customerId, Long productId);
