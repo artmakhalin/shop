@@ -10,6 +10,8 @@ import com.ait.shop.dto.mapping.CustomerMapper;
 import com.ait.shop.dto.position.PositionSaveDto;
 import com.ait.shop.repository.CustomerRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -19,6 +21,7 @@ import java.util.List;
 @Service
 public class CustomerServiceImpl implements CustomerService {
 
+    private final Logger logger = LoggerFactory.getLogger(CustomerServiceImpl.class);
     private final CustomerRepository repository;
     private final ProductService productService;
     private final CustomerMapper mapper;
@@ -38,6 +41,8 @@ public class CustomerServiceImpl implements CustomerService {
         entity.setCart(cart);
         cart.setCustomer(entity);
         repository.save(entity);
+
+        logger.info("Customer saved in database: {}", entity);
 
         return mapper.mapEntityToDto(entity);
     }
@@ -67,21 +72,33 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public void update(Long id, CustomerSaveUpdateDto updateDto) {
         repository.findById(id)
-                .ifPresent(x -> x.setName(updateDto.getName()));
+                .ifPresent(x -> {
+                    x.setName(updateDto.getName());
+
+                    logger.info("Customer id {} updated. New name: {}", id, updateDto.getName());
+                });
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         repository.findByIdAndActiveTrue(id)
-                .ifPresent(x -> x.setActive(false));
+                .ifPresent(x -> {
+                    x.setActive(false);
+
+                    logger.info("Customer id {} marked as inactive", id);
+                });
     }
 
     @Override
     @Transactional
     public void restoreById(Long id) {
         repository.findById(id)
-                .ifPresent(x -> x.setActive(true));
+                .ifPresent(x -> {
+                    x.setActive(true);
+
+                    logger.info("Customer id {} marked as active", id);
+                });
     }
 
     @Override
@@ -147,10 +164,11 @@ public class CustomerServiceImpl implements CustomerService {
                 position = new Position(product, saveDto.getQuantity(), cart);
                 position.setCart(cart);
                 cart.getPositions().add(position);
-
             } else {
                 position.setQuantity(position.getQuantity() + saveDto.getQuantity());
             }
+
+            logger.info("Customer id {} added product id {} with quantity {} to the cart", customerId, productId, saveDto.getQuantity());
         }
     }
 
@@ -168,6 +186,8 @@ public class CustomerServiceImpl implements CustomerService {
             if (position != null) {
                 cart.getPositions().remove(position);
                 position.setCart(null);
+
+                logger.info("Customer id {} deleted product id {} from the cart", customerId, productId);
             }
         }
     }
@@ -181,6 +201,8 @@ public class CustomerServiceImpl implements CustomerService {
             Cart cart = customer.getCart();
 
             cart.getPositions().clear();
+
+            logger.info("Customer id {} cleared the cart", customerId);
         }
     }
 

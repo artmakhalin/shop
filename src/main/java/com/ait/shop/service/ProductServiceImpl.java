@@ -7,6 +7,8 @@ import com.ait.shop.dto.product.ProductSaveDto;
 import com.ait.shop.dto.product.ProductUpdateDto;
 import com.ait.shop.repository.ProductRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -31,6 +33,7 @@ import java.util.List;
 @Service
 public class ProductServiceImpl implements ProductService {
 
+    private final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
     private final ProductRepository repository;
     private final ProductMapper mapper;
 
@@ -44,6 +47,11 @@ public class ProductServiceImpl implements ProductService {
         Product entity = mapper.mapDtoToEntity(saveDto);
         entity.setActive(true);
         repository.save(entity);
+
+        //Не всегда стоит логгировать объект целиком, т.к. он может быть очень большим
+        //Или этот объект может содержать секреты. Иногда стоит логгировать только определенные параметры
+        //объекта либо вообще только id
+        logger.info("Product saved to the database: {}", entity);
 
         return mapper.mapEntityToDto(entity);
     }
@@ -72,21 +80,34 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public void update(Long id, ProductUpdateDto updateDto) {
         repository.findById(id)
-                .ifPresent(x -> x.setPrice(updateDto.getNewPrice()));
+                .ifPresent(x -> {
+                    x.setPrice(updateDto.getNewPrice());
+
+                    logger.info("Product id {} updated. New price: {}", id, updateDto.getNewPrice());
+                });
+
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
         repository.findByIdAndActiveTrue(id)
-                .ifPresent(x -> x.setActive(false));
+                .ifPresent(x -> {
+                    x.setActive(false);
+
+                    logger.info("Product id {} marked as inactive", id);
+                });
     }
 
     @Override
     @Transactional
     public void restoreById(Long id) {
         repository.findById(id)
-                .ifPresent(x -> x.setActive(true));
+                .ifPresent(x -> {
+                    x.setActive(true);
+
+                    logger.info("Product id {} marked as active", id);
+                });
     }
 
     @Override
