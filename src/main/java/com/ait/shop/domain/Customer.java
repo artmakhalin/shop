@@ -1,6 +1,9 @@
 package com.ait.shop.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.Objects;
 
@@ -14,6 +17,12 @@ public class Customer {
     private Long id;
 
     @Column(name = "name")
+    @NotNull(message = "Customer name should not be null")
+    @NotBlank(message = "Customer title cannot be empty")
+    @Pattern(
+            regexp = "[A-Z][a-z ]{2,99}",
+            message = "Product title should be at least 3 chars length and starts with capital letter"
+    )
     private String name;
 
     @Column(name = "active")

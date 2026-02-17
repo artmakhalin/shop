@@ -3,7 +3,7 @@ package com.ait.shop.controller;
 import com.ait.shop.dto.product.ProductDto;
 import com.ait.shop.dto.product.ProductSaveDto;
 import com.ait.shop.dto.product.ProductUpdateDto;
-import com.ait.shop.service.ProductService;
+import com.ait.shop.service.interfaces.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

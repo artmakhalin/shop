@@ -1,10 +1,10 @@
 package com.ait.shop.dto.customer;
 
-public class CustomerSaveUpdateDto {
+public class CustomerSaveDto {
 
     private String name;
 
-    public CustomerSaveUpdateDto() {
+    public CustomerSaveDto() {
     }
 
     public String getName() {

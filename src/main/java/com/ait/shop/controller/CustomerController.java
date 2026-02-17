@@ -1,9 +1,11 @@
 package com.ait.shop.controller;
 
 import com.ait.shop.dto.customer.CustomerDto;
-import com.ait.shop.dto.customer.CustomerSaveUpdateDto;
-import com.ait.shop.dto.position.PositionSaveDto;
-import com.ait.shop.service.CustomerService;
+import com.ait.shop.dto.customer.CustomerSaveDto;
+import com.ait.shop.dto.customer.CustomerUpdateDto;
+import com.ait.shop.dto.position.PositionUpdateDto;
+import com.ait.shop.service.interfaces.CustomerService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +25,7 @@ public class CustomerController {
     //    Сохранить покупателя в базе данных.
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerDto save(@RequestBody CustomerSaveUpdateDto saveDto) {
+    public CustomerDto save(@RequestBody CustomerSaveDto saveDto) {
         return service.save(saveDto);
     }
 
@@ -42,7 +44,7 @@ public class CustomerController {
 
     //    Изменить одного покупателя в базе данных по его идентификатору.
     @PutMapping("/{id}")
-    public void update(@PathVariable Long id, @RequestBody CustomerSaveUpdateDto updateDto) {
+    public void update(@PathVariable Long id, @RequestBody CustomerUpdateDto updateDto) {
         service.update(id, updateDto);
     }
 
@@ -66,27 +68,27 @@ public class CustomerController {
     }
 
     //    Вернуть стоимость корзины покупателя по его идентификатору.
-    @GetMapping("/{id}/total-cost")
+    @GetMapping("/{id}/cart/total-cost")
     public BigDecimal getCustomerCartTotalCost(@PathVariable Long id) {
         return service.getCustomerCartTotalCost(id);
     }
 
     //    Вернуть среднюю стоимость продукта в корзине покупателя по его идентификатору.
-    @GetMapping("/{id}/avg-price")
+    @GetMapping("/{id}/cart/avg-price")
     public BigDecimal getCustomerCartAveragePrice(@PathVariable Long id) {
         return service.getCustomerCartAveragePrice(id);
     }
 
     //    Добавить товар в корзину покупателя по их идентификаторам.
     @PostMapping("/{customerId}/cart/items/{productId}")
-    public void addPositionToCustomerCart(@PathVariable Long customerId, @PathVariable Long productId, @RequestBody PositionSaveDto saveDto) {
-        service.addPositionToCustomerCart(customerId, productId, saveDto);
+    public void addPositionToCustomerCart(@PathVariable Long customerId, @PathVariable Long productId, @RequestBody PositionUpdateDto positionUpdateDto) {
+        service.addPositionToCustomerCart(customerId, productId, positionUpdateDto);
     }
 
     //    Удалить товар из корзины покупателя по их идентификаторам.
     @DeleteMapping("/{customerId}/cart/items/{productId}")
-    public void deletePositionFromCustomerCart(@PathVariable Long customerId, @PathVariable Long productId) {
-        service.deletePositionFromCustomerCart(customerId, productId);
+    public void deletePositionFromCustomerCart(@PathVariable Long customerId, @PathVariable Long productId, @RequestBody PositionUpdateDto positionUpdateDto) {
+        service.deletePositionFromCustomerCart(customerId, productId, positionUpdateDto);
     }
 
     //    Полностью очистить корзину покупателя по его идентификатору.

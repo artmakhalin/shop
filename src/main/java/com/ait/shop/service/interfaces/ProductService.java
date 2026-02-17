@@ -1,4 +1,4 @@
-package com.ait.shop.service;
+package com.ait.shop.service.interfaces;
 
 import com.ait.shop.domain.Product;
 import com.ait.shop.dto.product.ProductDto;

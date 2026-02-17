@@ -1,6 +1,9 @@
 package com.ait.shop.domain;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
 
@@ -18,6 +21,9 @@ public class Position {
     private Product product;
 
     @Column(name = "quantity")
+    @NotNull(message = "Product quantity cannot be null")
+    @Min(value = 1, message = "Product quantity cannot less than 1")
+    @Max(value = 99, message = "Product quantity cannot greater than 99")
     private int quantity;
 
     @ManyToOne

@@ -5,7 +5,9 @@ import com.ait.shop.dto.mapping.ProductMapper;
 import com.ait.shop.dto.product.ProductDto;
 import com.ait.shop.dto.product.ProductSaveDto;
 import com.ait.shop.dto.product.ProductUpdateDto;
+import com.ait.shop.exceptions.types.EntityNotFoundException;
 import com.ait.shop.repository.ProductRepository;
+import com.ait.shop.service.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 
 /*
 Что происходит при старте приложения:
@@ -44,6 +47,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto save(ProductSaveDto saveDto) {
+        Objects.requireNonNull(saveDto, "ProductSaveDto cannot be null");
+
         Product entity = mapper.mapDtoToEntity(saveDto);
         entity.setActive(true);
         repository.save(entity);
@@ -73,41 +78,48 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product getActiveEntityById(Long id) {
-        return repository.findByIdAndActiveTrue(id).orElse(null);
+        Objects.requireNonNull(id, "Product id cannot be null");
+
+        return repository.findByIdAndActiveTrue(id)
+                .orElseThrow(
+                        () -> new EntityNotFoundException(Product.class, id)
+                );
     }
 
     @Override
     @Transactional
     public void update(Long id, ProductUpdateDto updateDto) {
+        Objects.requireNonNull(id, "Product id cannot be null");
+        Objects.requireNonNull(updateDto, "ProductUpdateDto cannot be null");
+
         repository.findById(id)
-                .ifPresent(x -> {
-                    x.setPrice(updateDto.getNewPrice());
+                .orElseThrow(
+                        () -> new EntityNotFoundException(Product.class, id)
+                )
+                .setPrice(updateDto.getNewPrice());
 
-                    logger.info("Product id {} updated. New price: {}", id, updateDto.getNewPrice());
-                });
-
+        logger.info("Product id {} updated. New price: {}", id, updateDto.getNewPrice());
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
-        repository.findByIdAndActiveTrue(id)
-                .ifPresent(x -> {
-                    x.setActive(false);
+        Objects.requireNonNull(id, "Product id cannot be null");
 
-                    logger.info("Product id {} marked as inactive", id);
-                });
+        getActiveEntityById(id).setActive(false);
+        logger.info("Product id {} marked as inactive", id);
     }
 
     @Override
     @Transactional
     public void restoreById(Long id) {
-        repository.findById(id)
-                .ifPresent(x -> {
-                    x.setActive(true);
+        Objects.requireNonNull(id, "Product id cannot be null");
 
-                    logger.info("Product id {} marked as active", id);
-                });
+        repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(Product.class, id))
+                .setActive(true);
+
+        logger.info("Product id {} marked as active", id);
     }
 
     @Override

@@ -5,10 +5,15 @@ import com.ait.shop.domain.Customer;
 import com.ait.shop.domain.Position;
 import com.ait.shop.domain.Product;
 import com.ait.shop.dto.customer.CustomerDto;
-import com.ait.shop.dto.customer.CustomerSaveUpdateDto;
+import com.ait.shop.dto.customer.CustomerSaveDto;
+import com.ait.shop.dto.customer.CustomerUpdateDto;
 import com.ait.shop.dto.mapping.CustomerMapper;
-import com.ait.shop.dto.position.PositionSaveDto;
+import com.ait.shop.dto.position.PositionUpdateDto;
+import com.ait.shop.exceptions.types.EntityNotFoundException;
+import com.ait.shop.exceptions.types.EntityUpdateException;
 import com.ait.shop.repository.CustomerRepository;
+import com.ait.shop.service.interfaces.CustomerService;
+import com.ait.shop.service.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +21,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -33,13 +40,15 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public CustomerDto save(CustomerSaveUpdateDto saveDto) {
-        Customer entity = new Customer();
-        entity.setName(saveDto.getName());
-        entity.setActive(true);
+    public CustomerDto save(CustomerSaveDto saveDto) {
+        Objects.requireNonNull(saveDto, "CustomerSaveDto cannot be null");
+        Customer entity = mapper.mapDtoToEntity(saveDto);
+
         Cart cart = new Cart();
         entity.setCart(cart);
         cart.setCustomer(entity);
+
+        entity.setActive(true);
         repository.save(entity);
 
         logger.info("Customer saved in database: {}", entity);
@@ -64,41 +73,50 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer getEntityById(Long id) {
+        Objects.requireNonNull(id, "Customer id cannot be null");
+
         return repository.findByIdAndActiveTrue(id)
-                .orElse(null);
+                .orElseThrow(
+                        () -> new EntityNotFoundException(Customer.class, id)
+                );
     }
 
     @Override
     @Transactional
-    public void update(Long id, CustomerSaveUpdateDto updateDto) {
-        repository.findById(id)
-                .ifPresent(x -> {
-                    x.setName(updateDto.getName());
+    public void update(Long id, CustomerUpdateDto updateDto) {
+        Objects.requireNonNull(id, "Customer id cannot be null");
+        Objects.requireNonNull(updateDto, "CustomerSaveDto cannot be null");
 
-                    logger.info("Customer id {} updated. New name: {}", id, updateDto.getName());
-                });
+        repository.findById(id)
+                .orElseThrow(
+                        () -> new EntityNotFoundException(Customer.class, id)
+                )
+                .setName(updateDto.getNewName());
+
+        logger.info("Customer id {} updated. New name: {}", id, updateDto.getNewName());
+
     }
 
     @Override
     @Transactional
     public void deleteById(Long id) {
-        repository.findByIdAndActiveTrue(id)
-                .ifPresent(x -> {
-                    x.setActive(false);
+        Objects.requireNonNull(id, "Customer id cannot be null");
 
-                    logger.info("Customer id {} marked as inactive", id);
-                });
+        getEntityById(id).setActive(false);
+        logger.info("Customer id {} marked as inactive", id);
     }
 
     @Override
     @Transactional
     public void restoreById(Long id) {
-        repository.findById(id)
-                .ifPresent(x -> {
-                    x.setActive(true);
+        Objects.requireNonNull(id, "Customer id cannot be null");
 
-                    logger.info("Customer id {} marked as active", id);
-                });
+        repository.findById(id)
+                .orElseThrow(
+                        () -> new EntityNotFoundException(Customer.class, id)
+                )
+                .setActive(true);
+        logger.info("Customer id {} marked as active", id);
     }
 
     @Override
@@ -106,88 +124,178 @@ public class CustomerServiceImpl implements CustomerService {
         return repository.countByActiveTrue();
     }
 
-    @Override
-    public BigDecimal getCustomerCartTotalCost(Long id) {
-        Customer customer = getEntityById(id);
-        if (customer == null) {
-            return BigDecimal.ZERO;
-        }
+    private List<Position> getCustomerActivePositions(Customer customer) {
         return customer.getCart()
                 .getPositions()
                 .stream()
-                .map(position -> position
-                        .getProduct()
+                .filter(x -> x.getProduct().isActive())
+                .toList();
+    }
+
+    private BigDecimal getPositionsTotalCost(List<Position> positions) {
+        return positions.stream()
+                .map(x -> x.getProduct()
                         .getPrice()
-                        .multiply(BigDecimal.valueOf(position.getQuantity()))
+                        .multiply(BigDecimal.valueOf(x.getQuantity()))
                 )
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO);
     }
 
+    private int getProductsCountInPositions(List<Position> positions) {
+        return positions.stream()
+                .map(Position::getQuantity)
+                .reduce(Integer::sum)
+                .orElse(0);
+    }
+
+
     @Override
-    public BigDecimal getCustomerCartAveragePrice(Long id) {
+    public BigDecimal getCustomerCartTotalCost(Long id) {
+        Objects.requireNonNull(id, "Customer id cannot be null");
+
         Customer customer = getEntityById(id);
 
         if (customer == null) {
             return BigDecimal.ZERO;
         }
 
-        long productsCount = customer.getCart()
-                .getPositions()
-                .stream()
-                .map(Position::getQuantity)
-                .reduce(Integer::sum)
-                .orElse(0);
+//        return customer.getCart()
+//                .getPositions()
+//                .stream()
+//                .map(position -> position
+//                        .getProduct()
+//                        .getPrice()
+//                        .multiply(BigDecimal.valueOf(position.getQuantity()))
+//                )
+//                .reduce(BigDecimal::add)
+//                .orElse(BigDecimal.ZERO);
+        return getPositionsTotalCost(getCustomerActivePositions(customer));
+    }
 
-        if (productsCount == 0) {
+    @Override
+    public BigDecimal getCustomerCartAveragePrice(Long id) {
+        Objects.requireNonNull(id, "Customer id cannot be null");
+
+        Customer customer = getEntityById(id);
+
+        if (customer == null) {
             return BigDecimal.ZERO;
         }
 
-        return getCustomerCartTotalCost(id).divide(
-                BigDecimal.valueOf(productsCount),
-                2,
-                RoundingMode.HALF_UP
-        );
+//        long productsCount = customer.getCart()
+//                .getPositions()
+//                .stream()
+//                .map(Position::getQuantity)
+//                .reduce(Integer::sum)
+//                .orElse(0);
+//
+//        if (productsCount == 0) {
+//            return BigDecimal.ZERO;
+//        }
+//
+//        return getCustomerCartTotalCost(id).divide(
+//                BigDecimal.valueOf(productsCount),
+//                2,
+//                RoundingMode.HALF_UP
+//        );
+        List<Position> activePositions = getCustomerActivePositions(customer);
+        int productsQuantity = getProductsCountInPositions(activePositions);
+
+        return productsQuantity == 0
+                ? BigDecimal.ZERO
+                : getPositionsTotalCost(activePositions)
+                .divide(BigDecimal.valueOf(productsQuantity), 2, RoundingMode.HALF_UP);
     }
 
     @Override
     @Transactional
-    public void addPositionToCustomerCart(Long customerId, Long productId, PositionSaveDto saveDto) {
+    public void addPositionToCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto) {
+        Objects.requireNonNull(positionUpdateDto, "PositionUpdateDto cannot be null");
+
         Product product = productService.getActiveEntityById(productId);
         Customer customer = getEntityById(customerId);
 
-        if (customer != null && product != null) {
-            Cart cart = customer.getCart();
-            Position position = getPosition(cart, product);
-
-            if (position == null) {
-                position = new Position(product, saveDto.getQuantity(), cart);
-                position.setCart(cart);
-                cart.getPositions().add(position);
-            } else {
-                position.setQuantity(position.getQuantity() + saveDto.getQuantity());
-            }
-
-            logger.info("Customer id {} added product id {} with quantity {} to the cart", customerId, productId, saveDto.getQuantity());
+        if (customer == null || product == null) {
+            return;
         }
+
+        if (positionUpdateDto.getQuantity() < 1) {
+            throw new EntityUpdateException("Quantity should be positive");
+        }
+
+        for (Position position : customer.getCart().getPositions()) {
+            if (position.getProduct().equals(product)) {
+                position.setQuantity(position.getQuantity() + positionUpdateDto.getQuantity());
+
+                logger.info("Customer id {}, position id {}, quantity added, new value: {}",
+                        customerId, position.getId(), position.getQuantity());
+
+                return;
+            }
+        }
+
+        Cart cart = customer.getCart();
+        Position position = new Position(product, positionUpdateDto.getQuantity(), cart);
+        cart.getPositions().add(position);
+
+        logger.info("Customer id {}, position added to cart: {}", customerId, position);
+//        if (customer != null && product != null) {
+//            Cart cart = customer.getCart();
+//            Position position = getPosition(cart, product);
+//
+//            if (position == null) {
+//                position = new Position(product, positionUpdateDto.getQuantity(), cart);
+//                position.setCart(cart);
+//                cart.getPositions().add(position);
+//            } else {
+//                position.setQuantity(position.getQuantity() + positionUpdateDto.getQuantity());
+//            }
+//
+//            logger.info("Customer id {} added product id {} with quantity {} to the cart", customerId, productId, positionUpdateDto.getQuantity());
     }
 
 
     @Override
     @Transactional
-    public void deletePositionFromCustomerCart(Long customerId, Long productId) {
+    public void deletePositionFromCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto) {
         Product product = productService.getActiveEntityById(productId);
         Customer customer = getEntityById(customerId);
 
-        if (customer != null && product != null) {
-            Cart cart = customer.getCart();
-            Position position = getPosition(cart, product);
+//        if (customer != null && product != null) {
+//            Cart cart = customer.getCart();
+//            Position position = getPosition(cart, product);
+//
+//            if (position != null) {
+//                cart.getPositions().remove(position);
+//                position.setCart(null);
+//
+//                logger.info("Customer id {} deleted product id {} from the cart", customerId, productId);
+//            }
+//        }
+        if (customer == null || product == null) {
+            return;
+        }
 
-            if (position != null) {
-                cart.getPositions().remove(position);
-                position.setCart(null);
+        if (positionUpdateDto.getQuantity() < 1) {
+            throw new EntityUpdateException("Quantity should be positive");
+        }
 
-                logger.info("Customer id {} deleted product id {} from the cart", customerId, productId);
+        Iterator<Position> iterator = customer.getCart().getPositions().iterator();
+        while (iterator.hasNext()) {
+            Position position = iterator.next();
+            if (position.getProduct().equals(product)) {
+                if (position.getQuantity() > positionUpdateDto.getQuantity()) {
+                    position.setQuantity(position.getQuantity() - positionUpdateDto.getQuantity());
+
+                    logger.info("Customer id {}, position id {}, quantity reduced, new value: {}",
+                            customerId, position.getId(), position.getQuantity());
+                } else {
+                    iterator.remove();
+
+                    logger.info("Customer id {}, position removed from cart: {}", customerId, position);
+                }
+                break;
             }
         }
     }
@@ -206,12 +314,12 @@ public class CustomerServiceImpl implements CustomerService {
         }
     }
 
-    private Position getPosition(Cart cart, Product product) {
-        return cart.getPositions()
-                .stream()
-                .filter(x -> x.getProduct()
-                        .equals(product))
-                .findAny()
-                .orElse(null);
-    }
+//    private Position getPosition(Cart cart, Product product) {
+//        return cart.getPositions()
+//                .stream()
+//                .filter(x -> x.getProduct()
+//                        .equals(product))
+//                .findAny()
+//                .orElse(null);
+//    }
 }

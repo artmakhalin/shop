@@ -1,10 +1,14 @@
 package com.ait.shop.dto.position;
 
-public class PositionSaveDto {
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
+public class PositionUpdateDto {
 
     private int quantity;
 
-    public PositionSaveDto() {
+    public PositionUpdateDto() {
     }
 
     public int getQuantity() {
