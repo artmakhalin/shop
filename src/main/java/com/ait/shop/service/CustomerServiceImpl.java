@@ -160,16 +160,6 @@ public class CustomerServiceImpl implements CustomerService {
             return BigDecimal.ZERO;
         }
 
-//        return customer.getCart()
-//                .getPositions()
-//                .stream()
-//                .map(position -> position
-//                        .getProduct()
-//                        .getPrice()
-//                        .multiply(BigDecimal.valueOf(position.getQuantity()))
-//                )
-//                .reduce(BigDecimal::add)
-//                .orElse(BigDecimal.ZERO);
         return getPositionsTotalCost(getCustomerActivePositions(customer));
     }
 
@@ -179,26 +169,6 @@ public class CustomerServiceImpl implements CustomerService {
 
         Customer customer = getEntityById(id);
 
-        if (customer == null) {
-            return BigDecimal.ZERO;
-        }
-
-//        long productsCount = customer.getCart()
-//                .getPositions()
-//                .stream()
-//                .map(Position::getQuantity)
-//                .reduce(Integer::sum)
-//                .orElse(0);
-//
-//        if (productsCount == 0) {
-//            return BigDecimal.ZERO;
-//        }
-//
-//        return getCustomerCartTotalCost(id).divide(
-//                BigDecimal.valueOf(productsCount),
-//                2,
-//                RoundingMode.HALF_UP
-//        );
         List<Position> activePositions = getCustomerActivePositions(customer);
         int productsQuantity = getProductsCountInPositions(activePositions);
 
@@ -215,10 +185,6 @@ public class CustomerServiceImpl implements CustomerService {
 
         Product product = productService.getActiveEntityById(productId);
         Customer customer = getEntityById(customerId);
-
-        if (customer == null || product == null) {
-            return;
-        }
 
         if (positionUpdateDto.getQuantity() < 1) {
             throw new EntityUpdateException("Quantity should be positive");
@@ -240,19 +206,6 @@ public class CustomerServiceImpl implements CustomerService {
         cart.getPositions().add(position);
 
         logger.info("Customer id {}, position added to cart: {}", customerId, position);
-//        if (customer != null && product != null) {
-//            Cart cart = customer.getCart();
-//            Position position = getPosition(cart, product);
-//
-//            if (position == null) {
-//                position = new Position(product, positionUpdateDto.getQuantity(), cart);
-//                position.setCart(cart);
-//                cart.getPositions().add(position);
-//            } else {
-//                position.setQuantity(position.getQuantity() + positionUpdateDto.getQuantity());
-//            }
-//
-//            logger.info("Customer id {} added product id {} with quantity {} to the cart", customerId, productId, positionUpdateDto.getQuantity());
     }
 
 
@@ -261,21 +214,6 @@ public class CustomerServiceImpl implements CustomerService {
     public void deletePositionFromCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto) {
         Product product = productService.getActiveEntityById(productId);
         Customer customer = getEntityById(customerId);
-
-//        if (customer != null && product != null) {
-//            Cart cart = customer.getCart();
-//            Position position = getPosition(cart, product);
-//
-//            if (position != null) {
-//                cart.getPositions().remove(position);
-//                position.setCart(null);
-//
-//                logger.info("Customer id {} deleted product id {} from the cart", customerId, productId);
-//            }
-//        }
-        if (customer == null || product == null) {
-            return;
-        }
 
         if (positionUpdateDto.getQuantity() < 1) {
             throw new EntityUpdateException("Quantity should be positive");
@@ -304,22 +242,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Transactional
     public void clearCustomerCart(Long customerId) {
         Customer customer = getEntityById(customerId);
+        Cart cart = customer.getCart();
+        cart.getPositions().clear();
 
-        if (customer != null) {
-            Cart cart = customer.getCart();
-
-            cart.getPositions().clear();
-
-            logger.info("Customer id {} cleared the cart", customerId);
-        }
+        logger.info("Customer id {} cleared the cart", customerId);
     }
-
-//    private Position getPosition(Cart cart, Product product) {
-//        return cart.getPositions()
-//                .stream()
-//                .filter(x -> x.getProduct()
-//                        .equals(product))
-//                .findAny()
-//                .orElse(null);
-//    }
 }

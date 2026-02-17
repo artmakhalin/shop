@@ -86,7 +86,7 @@ public class CustomerController {
     }
 
     //    Удалить товар из корзины покупателя по их идентификаторам.
-    @DeleteMapping("/{customerId}/cart/items/{productId}")
+    @PutMapping("/{customerId}/cart/items/{productId}/remove")
     public void deletePositionFromCustomerCart(@PathVariable Long customerId, @PathVariable Long productId, @RequestBody PositionUpdateDto positionUpdateDto) {
         service.deletePositionFromCustomerCart(customerId, productId, positionUpdateDto);
     }

@@ -18,10 +18,10 @@ public class Customer {
 
     @Column(name = "name")
     @NotNull(message = "Customer name should not be null")
-    @NotBlank(message = "Customer title cannot be empty")
+    @NotBlank(message = "Customer name cannot be empty")
     @Pattern(
             regexp = "[A-Z][a-z ]{2,99}",
-            message = "Product title should be at least 3 chars length and starts with capital letter"
+            message = "Customer name should be at least 3 chars length and starts with capital letter"
     )
     private String name;
 
