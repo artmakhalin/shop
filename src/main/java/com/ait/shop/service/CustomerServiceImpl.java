@@ -152,23 +152,14 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public BigDecimal getCustomerCartTotalCost(Long id) {
-        Objects.requireNonNull(id, "Customer id cannot be null");
-
         Customer customer = getEntityById(id);
-
-        if (customer == null) {
-            return BigDecimal.ZERO;
-        }
 
         return getPositionsTotalCost(getCustomerActivePositions(customer));
     }
 
     @Override
     public BigDecimal getCustomerCartAveragePrice(Long id) {
-        Objects.requireNonNull(id, "Customer id cannot be null");
-
         Customer customer = getEntityById(id);
-
         List<Position> activePositions = getCustomerActivePositions(customer);
         int productsQuantity = getProductsCountInPositions(activePositions);
 
