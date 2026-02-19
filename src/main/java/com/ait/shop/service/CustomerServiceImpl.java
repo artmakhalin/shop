@@ -174,12 +174,12 @@ public class CustomerServiceImpl implements CustomerService {
     public void addPositionToCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto) {
         Objects.requireNonNull(positionUpdateDto, "PositionUpdateDto cannot be null");
 
-        Product product = productService.getActiveEntityById(productId);
-        Customer customer = getEntityById(customerId);
-
         if (positionUpdateDto.getQuantity() < 1) {
             throw new EntityUpdateException("Quantity should be positive");
         }
+
+        Product product = productService.getActiveEntityById(productId);
+        Customer customer = getEntityById(customerId);
 
         for (Position position : customer.getCart().getPositions()) {
             if (position.getProduct().equals(product)) {
@@ -203,12 +203,14 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void deletePositionFromCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto) {
-        Product product = productService.getActiveEntityById(productId);
-        Customer customer = getEntityById(customerId);
+        Objects.requireNonNull(positionUpdateDto, "PositionUpdateDto cannot be null");
 
         if (positionUpdateDto.getQuantity() < 1) {
             throw new EntityUpdateException("Quantity should be positive");
         }
+
+        Product product = productService.getActiveEntityById(productId);
+        Customer customer = getEntityById(customerId);
 
         Iterator<Position> iterator = customer.getCart().getPositions().iterator();
         while (iterator.hasNext()) {
