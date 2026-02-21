@@ -6,7 +6,9 @@ import com.ait.shop.dto.product.ProductUpdateDto;
 import com.ait.shop.service.interfaces.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -86,4 +88,12 @@ public class ProductController {
     public BigDecimal getProductsAveragePrice() {
         return service.getAllActiveProductsAveragePrice();
     }
+
+    // Добавить картинку к конкретному продукту по его ID
+    // POST -> http://10.20.30.40:8080/products/7/image
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public void addImage(@PathVariable Long id, @RequestParam MultipartFile image) throws IOException {
+        service.addImage(id, image);
+    }
+
 }

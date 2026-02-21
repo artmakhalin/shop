@@ -2,6 +2,7 @@ package com.ait.shop.exceptions;
 
 import com.ait.shop.exceptions.types.EntityNotFoundException;
 import com.ait.shop.exceptions.types.EntityUpdateException;
+import com.ait.shop.exceptions.types.FileUploadException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestControllerAdvice
@@ -34,8 +36,27 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(FileUploadException.class)
+    public ResponseEntity<String> handleException(FileUploadException e) {
+        String message = e.getMessage();
+        logger.warn(message);
+
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<String> handleException(NullPointerException e) {
+        String message = e.getMessage();
+        logger.error(message, e);
+
+        return new ResponseEntity<>(
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    @ExceptionHandler(IOException.class)
+    public ResponseEntity<String> handleException(IOException e) {
         String message = e.getMessage();
         logger.error(message, e);
 

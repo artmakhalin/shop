@@ -31,6 +31,9 @@ public class Customer {
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "customer")
     private Cart cart;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     public Customer() {
     }
 
@@ -64,6 +67,14 @@ public class Customer {
 
     public void setCart(Cart cart) {
         this.cart = cart;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     @Override

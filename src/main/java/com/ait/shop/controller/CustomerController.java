@@ -8,7 +8,9 @@ import com.ait.shop.service.interfaces.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -95,5 +97,10 @@ public class CustomerController {
     @DeleteMapping("/{customerId}/cart/items")
     public void clearCustomerCart(@PathVariable Long customerId) {
         service.clearCustomerCart(customerId);
+    }
+
+    @PostMapping(value = "/{id}/image", consumes = "multipart/form-data")
+    public void addImage(@PathVariable Long id, @RequestParam MultipartFile image) throws IOException {
+        service.addImage(id, image);
     }
 }

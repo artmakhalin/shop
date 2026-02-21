@@ -13,12 +13,15 @@ import com.ait.shop.exceptions.types.EntityNotFoundException;
 import com.ait.shop.exceptions.types.EntityUpdateException;
 import com.ait.shop.repository.CustomerRepository;
 import com.ait.shop.service.interfaces.CustomerService;
+import com.ait.shop.service.interfaces.FileService;
 import com.ait.shop.service.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Iterator;
@@ -32,11 +35,13 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository repository;
     private final ProductService productService;
     private final CustomerMapper mapper;
+    private final FileService fileService;
 
-    public CustomerServiceImpl(CustomerRepository repository, ProductService productService, CustomerMapper mapper) {
+    public CustomerServiceImpl(CustomerRepository repository, ProductService productService, CustomerMapper mapper, FileService fileService) {
         this.repository = repository;
         this.productService = productService;
         this.mapper = mapper;
+        this.fileService = fileService;
     }
 
     @Override
@@ -239,5 +244,15 @@ public class CustomerServiceImpl implements CustomerService {
         cart.getPositions().clear();
 
         logger.info("Customer id {} cleared the cart", customerId);
+    }
+
+    @Override
+    @Transactional
+    public void addImage(Long id, MultipartFile image) throws IOException {
+        Objects.requireNonNull(id, "Customer id cannot be null");
+
+        Customer customer = getEntityById(id);
+        String imageUrl = fileService.uploadAndGetUrl(image);
+        customer.setImageUrl(imageUrl);
     }
 }

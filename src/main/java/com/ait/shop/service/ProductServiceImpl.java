@@ -7,12 +7,15 @@ import com.ait.shop.dto.product.ProductSaveDto;
 import com.ait.shop.dto.product.ProductUpdateDto;
 import com.ait.shop.exceptions.types.EntityNotFoundException;
 import com.ait.shop.repository.ProductRepository;
+import com.ait.shop.service.interfaces.FileService;
 import com.ait.shop.service.interfaces.ProductService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -39,10 +42,12 @@ public class ProductServiceImpl implements ProductService {
     private final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
     private final ProductRepository repository;
     private final ProductMapper mapper;
+    private final FileService fileService;
 
-    public ProductServiceImpl(ProductRepository repository, ProductMapper mapper) {
+    public ProductServiceImpl(ProductRepository repository, ProductMapper mapper, FileService fileService) {
         this.repository = repository;
         this.mapper = mapper;
+        this.fileService = fileService;
     }
 
     @Override
@@ -149,5 +154,15 @@ public class ProductServiceImpl implements ProductService {
                 2,
                 RoundingMode.HALF_UP
         );
+    }
+
+    @Override
+    @Transactional
+    public void addImage(Long id, MultipartFile image) throws IOException {
+        Objects.requireNonNull(id, "Product id cannot be null");
+
+        Product product = getActiveEntityById(id);
+        String imageUrl = fileService.uploadAndGetUrl(image);
+        product.setImageUrl(imageUrl);
     }
 }

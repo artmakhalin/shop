@@ -8,6 +8,8 @@ public class CustomerDto {
     private String name;
     private CartDto cart;
 
+    private String imageUrl;
+
     public CustomerDto() {
     }
 
@@ -33,6 +35,14 @@ public class CustomerDto {
 
     public void setCart(CartDto cart) {
         this.cart = cart;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     @Override

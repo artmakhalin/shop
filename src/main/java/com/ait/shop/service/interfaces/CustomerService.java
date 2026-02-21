@@ -5,7 +5,9 @@ import com.ait.shop.dto.customer.CustomerDto;
 import com.ait.shop.dto.customer.CustomerSaveDto;
 import com.ait.shop.dto.customer.CustomerUpdateDto;
 import com.ait.shop.dto.position.PositionUpdateDto;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -46,4 +48,6 @@ public interface CustomerService {
     void deletePositionFromCustomerCart(Long customerId, Long productId, PositionUpdateDto positionUpdateDto);
 //    Полностью очистить корзину покупателя по его идентификатору.
     void clearCustomerCart(Long customerId);
+
+    void addImage(Long id, MultipartFile image) throws IOException;
 }

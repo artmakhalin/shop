@@ -47,6 +47,9 @@ public class Product {
     @Column(name = "active")
     private boolean active;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     public Product() {
     }
 
@@ -80,6 +83,14 @@ public class Product {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     //!!!
