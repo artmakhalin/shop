@@ -1,8 +1,6 @@
 package com.ait.shop.exceptions;
 
-import com.ait.shop.exceptions.types.EntityNotFoundException;
-import com.ait.shop.exceptions.types.EntityUpdateException;
-import com.ait.shop.exceptions.types.FileUploadException;
+import com.ait.shop.exceptions.types.*;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -42,6 +40,41 @@ public class GlobalExceptionHandler {
         logger.warn(message);
 
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AuthorizationException.class)
+    public ResponseEntity<String> handleException(AuthorizationException e) {
+        String message = e.getMessage();
+        logger.warn(message, e);
+
+        return new ResponseEntity<>(message, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(RegistrationException.class)
+    public ResponseEntity<String> handleException(RegistrationException e) {
+        String message = e.getMessage();
+        logger.warn(message, e);
+
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConfirmationException.class)
+    public ResponseEntity<String> handleException(ConfirmationException e) {
+        String message = e.getMessage();
+        logger.warn(message, e);
+
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<String> handleException(EmailSendingException e) {
+        String message = e.getMessage();
+        logger.error(message, e);
+
+        return new ResponseEntity<>(
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
     @ExceptionHandler(NullPointerException.class)
