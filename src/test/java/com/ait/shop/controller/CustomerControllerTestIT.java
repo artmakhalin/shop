@@ -1,28 +1,32 @@
 package com.ait.shop.controller;
 
-import com.ait.shop.domain.Cart;
-import com.ait.shop.domain.Customer;
-import com.ait.shop.domain.Position;
-import com.ait.shop.domain.Product;
+import com.ait.shop.constants.Constants;
+import com.ait.shop.domain.*;
+import com.ait.shop.domain.enums.Role;
 import com.ait.shop.dto.customer.CustomerDto;
 import com.ait.shop.dto.customer.CustomerSaveDto;
 import com.ait.shop.dto.customer.CustomerUpdateDto;
 import com.ait.shop.dto.position.PositionUpdateDto;
 import com.ait.shop.repository.CustomerRepository;
 import com.ait.shop.repository.ProductRepository;
+import com.ait.shop.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import javax.crypto.SecretKey;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +43,16 @@ class CustomerControllerTestIT {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${KEY_PHRASE_ACCESS}")
+    private String accessPhrase;
+    private String adminAccessToken;
 
     private static final String CUSTOMER_RESOURCE = "/customers";
 
@@ -75,9 +89,39 @@ class CustomerControllerTestIT {
         customerRepository.saveAll(List.of(activeCustomer1, activeCustomer2, activeCustomer3, inactiveCustomer));
     }
 
+    @BeforeEach
+    public void setUp() {
+        addUsersToDatabase();
+        createAdminAccessToken();
+    }
+
+    private void createAdminAccessToken() {
+        Date now = new Date();
+        Date expiration = new Date(now.getTime() + 60 * 1000);
+
+        SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(accessPhrase));
+
+        adminAccessToken = Jwts.builder()
+                .subject("admin@test.com")
+                .expiration(expiration)
+                .signWith(secretKey)
+                .compact();
+    }
+
+    private void addUsersToDatabase() {
+        User admin = new User();
+        admin.setEmail("admin@test.com");
+        admin.setPassword(passwordEncoder.encode("adminPass"));
+        admin.setName("Admin");
+        admin.setRole(Role.ROLE_ADMIN);
+        admin.setConfirmed(true);
+        userRepository.save(admin);
+    }
+
     @AfterEach
     public void cleanDatabase() {
         customerRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test
@@ -85,7 +129,11 @@ class CustomerControllerTestIT {
         CustomerSaveDto saveDto = new CustomerSaveDto();
         saveDto.setName("Test customer");
 
-        HttpEntity<CustomerSaveDto> request = new HttpEntity<>(saveDto);
+        String tokenCookie = Constants.ACCESS_TOKEN_COOKIE_NAME + "=" + adminAccessToken;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.COOKIE, tokenCookie);
+
+        HttpEntity<CustomerSaveDto> request = new HttpEntity<>(saveDto, httpHeaders);
 
         ResponseEntity<CustomerDto> response = httpClient.postForEntity(
                 CUSTOMER_RESOURCE,
@@ -110,10 +158,15 @@ class CustomerControllerTestIT {
     public void shouldFindAllActiveCustomers() {
         ParameterizedTypeReference<List<CustomerDto>> responseType = new ParameterizedTypeReference<>() {
         };
+
+        String tokenCookie = Constants.ACCESS_TOKEN_COOKIE_NAME + "=" + adminAccessToken;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.COOKIE, tokenCookie);
+
         ResponseEntity<List<CustomerDto>> response = httpClient.exchange(
                 CUSTOMER_RESOURCE,
                 HttpMethod.GET,
-                null,
+                new HttpEntity<>(httpHeaders),
                 responseType
         );
 
@@ -142,7 +195,11 @@ class CustomerControllerTestIT {
         CustomerUpdateDto updateDto = new CustomerUpdateDto();
         customerBeforeUpdate.setName("Na");
 
-        HttpEntity<CustomerUpdateDto> request = new HttpEntity<>(updateDto);
+        String tokenCookie = Constants.ACCESS_TOKEN_COOKIE_NAME + "=" + adminAccessToken;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.COOKIE, tokenCookie);
+
+        HttpEntity<CustomerUpdateDto> request = new HttpEntity<>(updateDto, httpHeaders);
 
         ResponseEntity<String> response = httpClient.exchange(
                 String.format("%s/%d", CUSTOMER_RESOURCE, customerBeforeUpdate.getId()),
@@ -164,10 +221,14 @@ class CustomerControllerTestIT {
     
     @Test
     public void shouldReturn404WhenDeleteUnexistedCustomer() {
+        String tokenCookie = Constants.ACCESS_TOKEN_COOKIE_NAME + "=" + adminAccessToken;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.COOKIE, tokenCookie);
+
         ResponseEntity<String> response = httpClient.exchange(
                 String.format("%s/%d", CUSTOMER_RESOURCE, Integer.MAX_VALUE),
                 HttpMethod.DELETE,
-                null,
+                new HttpEntity<>(httpHeaders),
                 String.class
         );
 
@@ -197,7 +258,11 @@ class CustomerControllerTestIT {
         PositionUpdateDto updateDto = new PositionUpdateDto();
         updateDto.setQuantity(5);
 
-        HttpEntity<PositionUpdateDto> request = new HttpEntity<>(updateDto);
+        String tokenCookie = Constants.ACCESS_TOKEN_COOKIE_NAME + "=" + adminAccessToken;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(HttpHeaders.COOKIE, tokenCookie);
+
+        HttpEntity<PositionUpdateDto> request = new HttpEntity<>(updateDto, httpHeaders);
 
         ResponseEntity<?> response = httpClient.postForEntity(
                 String.format("%s/%d/cart/items/%d", CUSTOMER_RESOURCE, customer.getId(), product.getId()),

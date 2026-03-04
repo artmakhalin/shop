@@ -1,6 +1,5 @@
 package com.ait.shop.security.controller;
 
-import com.ait.shop.constants.Constants;
 import com.ait.shop.security.dto.LoginRequestDto;
 import com.ait.shop.security.dto.TokenResponseDto;
 import com.ait.shop.security.service.AuthService;
